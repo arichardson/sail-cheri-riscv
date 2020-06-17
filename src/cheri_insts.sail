@@ -1116,7 +1116,7 @@ function handle_store_data_via_cap(rs, cs, cap_val, vaddrBits, width) = {
     TR_Address(addr, _) => {
       let eares : MemoryOpResult(unit) = mem_write_ea(addr, size, aq, rl, false);
       match (eares) {
-        MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
+        MemException(e) => { handle_mem_exception(vaddrBits, e); RETIRE_FAIL },
         MemValue(_) => {
           let rs_val = X(rs);
           let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
@@ -1128,7 +1128,7 @@ function handle_store_data_via_cap(rs, cs, cap_val, vaddrBits, width) = {
           match (res) {
             MemValue(true)  => RETIRE_SUCCESS,
             MemValue(false) => internal_error("store got false from mem_write_value"),
-            MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
+            MemException(e) => { handle_mem_exception(vaddrBits, e); RETIRE_FAIL }
           }
         }
       }
@@ -1183,13 +1183,13 @@ function handle_store_cap_via_cap(rs, cs, cap_val, vaddrBits) = {
     TR_Address(addr, _) => {
       let eares : MemoryOpResult(unit) = mem_write_ea_cap(addr, aq, rl, false);
       match (eares) {
-        MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
+        MemException(e) => { handle_mem_exception(vaddrBits, e); RETIRE_FAIL },
         MemValue(_) => {
           let res : MemoryOpResult(bool) = mem_write_cap(addr, rs_val, aq, rl, false);
           match (res) {
             MemValue(true)  => RETIRE_SUCCESS,
             MemValue(false) => internal_error("store got false from mem_write_value"),
-            MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
+            MemException(e) => { handle_mem_exception(vaddrBits, e); RETIRE_FAIL }
           }
         }
       }
@@ -1268,7 +1268,7 @@ function handle_store_cond_data_via_cap(rs2, cs, cap_val, vaddrBits, width) = {
       TR_Address(addr, _) => {
         let eares : MemoryOpResult(unit) = mem_write_ea(addr, size, aq, rl, false);
         match (eares) {
-          MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
+          MemException(e) => { handle_mem_exception(vaddrBits, e); RETIRE_FAIL },
           MemValue(_) => {
             let rs2_val = X(rs2);
             let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
@@ -1280,7 +1280,7 @@ function handle_store_cond_data_via_cap(rs2, cs, cap_val, vaddrBits, width) = {
             match (res) {
               MemValue(true)  => { X(rs2) = EXTZ(0b0); cancel_reservation(); RETIRE_SUCCESS },
               MemValue(false) => { X(rs2) = EXTZ(0b1); cancel_reservation(); RETIRE_SUCCESS },
-              MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
+              MemException(e) => { handle_mem_exception(vaddrBits, e); RETIRE_FAIL }
             }
           }
         }
@@ -1326,7 +1326,7 @@ function handle_store_cond_cap_via_cap(cs2, cs, cap_val, vaddrBits) = {
       TR_Address(addr, _) => {
         let eares : MemoryOpResult(unit) = mem_write_ea_cap(addr, aq, rl, false);
         match (eares) {
-          MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
+          MemException(e) => { handle_mem_exception(vaddrBits, e); RETIRE_FAIL },
           MemValue(_) => {
             let res : MemoryOpResult(bool) = mem_write_cap(addr, cs2_val, aq, rl, false);
             match (res) {
@@ -1341,7 +1341,7 @@ function handle_store_cond_cap_via_cap(cs2, cs, cap_val, vaddrBits) = {
                  RETIRE_SUCCESS
               },
               MemException(e) => {
-                handle_mem_exception(addr, e);
+                handle_mem_exception(vaddrBits, e);
                 RETIRE_FAIL
               }
             }
