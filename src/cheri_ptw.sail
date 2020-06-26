@@ -57,18 +57,8 @@ function translationException(a : AccessType(ext_access_type), f : PTW_Error) ->
 
     /* Tag-asserting stores can raise CHERI page faults. */
     (Write(Cap), PTW_Ext_Error(AT_CAP_ERR))     => E_Extension(EXC_SAMO_CAP_PAGE_FAULT),
-
-    /*
-     * XXX ReadWrite(Cap) does not provide enough information to distinguish
-     * between a tag-clearing store and tag-asserting store in the presence of
-     * a tag-capable load, or a tag-asserting store in the case of a
-     * tag-incapable load.  (That is, it only clearly distinguishes a
-     * tag-incapable load with a tag-clearing store from every other option.)
-     * Groundwork for fixing this exists in the sail RISC-V model, but we have
-     * not yet caught up to that point.  Fortunately, we don't actually have
-     * amoswap.c yet, so this is not observably wrong.
-     */
-    (ReadWrite(Cap), PTW_Ext_Error(AT_CAP_ERR)) => E_Extension(EXC_SAMO_CAP_PAGE_FAULT),
+    (ReadWrite(Cap,_), PTW_Ext_Error(AT_CAP_ERR)) => E_Extension(EXC_SAMO_CAP_PAGE_FAULT),
+    (ReadWrite(_,Cap), PTW_Ext_Error(AT_CAP_ERR)) => E_Extension(EXC_SAMO_CAP_PAGE_FAULT),
 
     /*
      * XXX Read(_) and Execute() should never result in an ext_ptw value that
@@ -77,15 +67,17 @@ function translationException(a : AccessType(ext_access_type), f : PTW_Error) ->
      */
 
     /* For other exceptions, Cap accesses fault similar to Data accesses below. */
-    (ReadWrite(Cap), PTW_Access())  => E_SAMO_Access_Fault(),
-    (ReadWrite(Cap), _)             => E_SAMO_Page_Fault(),
+    (ReadWrite(Cap,_), PTW_Access())  => E_SAMO_Access_Fault(),
+    (ReadWrite(_,Cap), PTW_Access())  => E_SAMO_Access_Fault(),
+    (ReadWrite(Cap,_), _)             => E_SAMO_Page_Fault(),
+    (ReadWrite(_,Cap), _)             => E_SAMO_Page_Fault(),
     (Read(Cap), PTW_Access())       => E_Load_Access_Fault(),
     (Read(Cap), _)                  => E_Load_Page_Fault(),
     (Write(Cap), PTW_Access())      => E_SAMO_Access_Fault(),
     (Write(Cap), _)                 => E_SAMO_Page_Fault(),
 
-    (ReadWrite(Data), PTW_Access()) => E_SAMO_Access_Fault(),
-    (ReadWrite(Data), _)            => E_SAMO_Page_Fault(),
+    (ReadWrite(Data,Data), PTW_Access()) => E_SAMO_Access_Fault(),
+    (ReadWrite(Data,Data), _)            => E_SAMO_Page_Fault(),
     (Read(Data), PTW_Access())      => E_Load_Access_Fault(),
     (Read(Data), _)                 => E_Load_Page_Fault(),
     (Write(Data), PTW_Access())     => E_SAMO_Access_Fault(),
