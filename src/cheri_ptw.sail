@@ -25,29 +25,15 @@ function ptw_error_to_str(e) =
 overload to_str = {ptw_error_to_str}
 
 /*
- * I apologize for the confusion you have experienced if you have skipped over
- * this comment and read the body of this function first.  Hopefully these two
- * points resolve most of it:
- *
- * 1) While it may look like we're signaling that we must *always* raise
- * faults, translationException below can see whether the instruction
- * triggering the PTW is claiming to store an asserted tag, and will ignore our
- * result if that isn't so.
- *
- * 2) We analyse only the store-side component of ext_ptw here.  The PTW logic
- * cannot see into the data path, and so load-side responses, including traps,
- * must be handled by the instruction that initiated the translation.
+ * checkPTEPermission has returned a failure; here, ext_ptw is no longer
+ * caveats for data dependence, but rather certainly identifies the cause of a
+ * trap.
  */
-function ext_get_ptw_error(ext_ptw : ext_ptw) -> PTW_Error =
-  match (ext_ptw.ptw_sc_mod) {
-
-    /*
-     * This is confusing: PTW_No_Permission() is never used as such, but just
-     * dodges the pattern matches in translationException, below.
-     */
-    PTW_SCM_OK   => PTW_No_Permission(),
-
-    PTW_SCM_TRAP => PTW_Ext_Error(AT_CAP_ERR)
+function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
+  match (eptwf) {
+    EPTWF_NO_PERM  => PTW_No_Permission(),
+    EPTWF_INVALID  => PTW_Invalid_PTE(),
+    EPTWF_CAP_ERR  => PTW_Ext_Error(AT_CAP_ERR)
   }
 
 /* conversion of these translation/PTW failures into architectural exceptions */

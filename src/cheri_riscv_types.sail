@@ -63,6 +63,13 @@ let init_ext_ptw : ext_ptw = struct {
   ptw_sc_mod = PTW_SCM_OK
 }
 
+/* Address translation failures */
+enum ext_ptw_fail = {
+  EPTWF_NO_PERM,
+  EPTWF_INVALID,
+  EPTWF_CAP_ERR
+}
+
 /* Address translation errors */
 enum ext_ptw_error = {AT_CAP_ERR}
 
