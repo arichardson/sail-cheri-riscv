@@ -1315,13 +1315,8 @@ function handle_store_cond_cap_via_cap(cs2, cs, cap_val, vaddrBits) = {
           MemValue(_) => {
             let res : MemoryOpResult(bool) = mem_write_cap(addr, cs2_val, aq, rl, false);
             match (res) {
-              MemValue(true)  => {
-                 writeCapReg(cs2, int_to_cap(EXTZ(0b0)));
-                 cancel_reservation();
-                 RETIRE_SUCCESS
-              },
-              MemValue(false) => {
-                 writeCapReg(cs2, int_to_cap(EXTZ(0b1)));
+              MemValue(success)  => {
+                 writeCapReg(cs2, int_to_cap(EXTZ(bool_to_bits(~(success)))));
                  cancel_reservation();
                  RETIRE_SUCCESS
               },
